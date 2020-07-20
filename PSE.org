@@ -1,0 +1,105 @@
+#+TITLE: Making type-safe elements
+#+SUBTITLE: How to be sure about atoms 
+
+/Abstract./ We give a potential implementation of data structures for atoms.
+This is up to Xenon cause this is enough up to now.
+
+#+LATEX: \vskip1cm
+
+First off all we define the periodic table of elements in a data type.
+This is some kind of symbolic mapping. In Haskell this is pretty straightforward,
+we can even write it as printed.
+#+begin_src haskell :tangle yes
+data PSElement =
+    H                                                                                  | He
+  | Li | Be                                                   | B  | C  | N  | O  | F  | Ne
+  | Na | Mg                                                   | Al | Si | P  | S  | Cl | Ar
+  | K  | Ca | Sc | Ti | V  | Cr | Mn | Fe | Co | Ni | Cu | Zn | Ga | Ge | As | Se | Br | Kr
+  | Rb | Sr | Y  | Zr | Nb | Mo | Tc | Ru | Rh | Pd | Ag | Cd | In | Sn | Sb | Te | I  | Xe
+  deriving (Enum,Ord,Show,Read)
+#+end_src
+
+In Common Lisp we can make that as follows.
+
+#+begin_src lisp :tangle yes
+  (defparameter *periodic-table*
+    '( H                                                  He
+       Li Be                               B  C  N  O  F  Ne
+       Na Mg                               Al Si P  S  Cl Ar
+       K  Ca Sc Ti V  Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr
+       Rb Sr Y  Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I  Xe )
+
+  (deftype element-abbreviation ()
+    `(member ,@*periodic-table*))
+#+end_src
+
+Elements are part of a specific class.
+#+begin_src haskell :tangle yes
+data ElementClass =
+    AlkaliMetal
+  | EarthAlkaliMetal
+  | HalfMetal
+  | OtherMetal
+  | TransitionMetal
+  | NotMetal
+  | Halogene
+#+end_src
+
+#+begin_src lisp :tangle yes
+  (deftype ELEMENT-CLASS ()
+    '(member
+      ALKALI-METAL
+      EARTH-ALKALI-METAL
+      HALF-METAL
+      OTHER-METAL
+      TRANSITION-METAL
+      NOT-METAL
+      HALOGENE
+      ))
+#+end_src
+
+This gives the aggregate state at room temperature (~20°C).
+To be fair, BoseEinstein and Plasma aren't needed directly.
+
+#+begin_src haskell :tangle yes
+data AggregateState = BoseEinstein | Solid | Fluid | Gas | Plasma
+#+end_src
+
+#+begin_src lisp :tangle yes
+  (deftype aggregate-state ()
+    '(member BOSE-EINSTEIN SOLID FLUID GAS PLASMA))
+#+end_src
+
+Now the final data structure for defining an atom and its features.
+
+#+begin_src haskell :tangle yes
+data Element = Element {
+    abbreviation :: PSElement
+  , englishName :: String
+  , latinName :: String
+  , group :: Int
+  , period :: Int
+  , classification :: ElementClass
+  , relativeAtomMass :: Double
+  , allredRochowElectroNegativity :: Float
+  , paulingElectroNegativity :: Float
+  , atomRadius :: Float
+  , electronConfiguration }
+#+end_src
+
+#+begin_src lisp :tangle yes
+  (defstruct element
+    (abbreviation nil :type element-abbreviation)
+    (englishName nil :type (or string symbol))
+    (latinName nil :type (or string symbol))
+    (group 1 :type (integer 1))
+    (period 1 :type (integer 1))
+    (classification nil :type element-class)
+    (relative-atom-mass 0.0 :type double)
+    (allred-rochow-electro-negativity 0.0 :type (float 0.0 5.0))
+    (pauling-electro-negativity 0.0 :type (float 0.0 5.0))
+    (atom-radius 0.0 (float 0.0))
+    electron-configuration)
+#+end_src
+
+This isn't as type-safe as it /could/ be. Improvements coming soon.
